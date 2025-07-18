@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Система подсчёта гостей</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        input, button { margin-top: 10px; }
+        video, img { max-width: 100%; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Загрузка изображения или видео</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="media" accept="image/*,video/mp4" required />
+        <button type="submit">Обработать</button>
+    </form>
+
+    <div id="resultArea" style="margin-top:20px;">
+        <h3>Результат:</h3>
+        <img id="resultImage" style="display:none;" alt="Результат изображения" />
+        <video id="resultVideo" controls style="display:none;"></video>
+        <div id="stats" style="margin-top:10px;"></div>
+        <a id="downloadReport" href="#" target="_blank" style="display:none; margin-top:10px; display:inline-block;">📄 Скачать отчёт</a>
+    </div>
+
+    <script>
+    document.getElementById("uploadForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const response = await fetch("/process", { method: "POST", body: formData });
+        const data = await response.json();
+
+        const statsDiv = document.getElementById("stats");
+        const imageEl = document.getElementById("resultImage");
+        const videoEl = document.getElementById("resultVideo");
+        const reportLink = document.getElementById("downloadReport");
+
+        imageEl.style.display = "none";
+        videoEl.style.display = "none";
+        reportLink.style.display = "none";
+
+        if (data.error) {
+            statsDiv.innerText = "Ошибка: " + data.error;
+            return;
+        }
+
+        if (data.media_type === "image") {
+            imageEl.src = data.output_url + "?t=" + Date.now();
+            imageEl.style.display = "block";
+        } else if (data.media_type === "video") {
+            videoEl.src = data.output_url + "?t=" + Date.now();
+            videoEl.style.display = "block";
+            videoEl.load();
+        }
+
+        statsDiv.innerText = `Уникальных сидящих гостей: ${data.count}`;
+        reportLink.href = data.report_url;
+        reportLink.style.display = "inline-block";
+    });
+    </script>
+	<style>
+    .history-btn {
+        display: inline-block;
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-size: 14px;
+        margin-top: 20px;
+    }
+
+    .history-btn:hover {
+        background-color: #388E3C;
+    }
+</style>
+
+<a href="/download/history" class="history-btn" target="_blank" download>
+    📥 Скачать историю (.xlsx)
+</a>
+</body>
+</html>
