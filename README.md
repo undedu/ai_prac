@@ -1,1 +1,1 @@
-# ai_prac jun 2025
+# ai_prac jul 2025
